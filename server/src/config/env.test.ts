@@ -52,6 +52,22 @@ describe('loadEnv', () => {
     );
   });
 
+  it('treats blank optional values as not set', () => {
+    const env = loadEnv({ ...requiredOnly, MONGO_URI: '', SENTRY_DSN: '', METRICS_TOKEN: '' });
+
+    expect(env.MONGO_URI).toBeUndefined();
+    expect(env.SENTRY_DSN).toBeUndefined();
+    expect(env.METRICS_TOKEN).toBeUndefined();
+  });
+
+  it('refuses a METRICS_TOKEN that is too short', () => {
+    expect(() => loadEnv({ ...requiredOnly, METRICS_TOKEN: 'short' })).toThrow(/METRICS_TOKEN/);
+  });
+
+  it('refuses a SENTRY_DSN that is not a URL', () => {
+    expect(() => loadEnv({ ...requiredOnly, SENTRY_DSN: 'not-a-url' })).toThrow(/SENTRY_DSN/);
+  });
+
   it('requires MONGO_URI when DB_DRIVER is mongo', () => {
     expect(() => loadEnv({ ...requiredOnly, DB_DRIVER: DB_DRIVERS.MONGO })).toThrow(/MONGO_URI/);
   });

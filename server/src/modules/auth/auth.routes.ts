@@ -1,5 +1,5 @@
-import { Router } from 'express';
 import { API_ROUTES } from '../../constants/index.js';
+import { createApiRouter } from '../../lib/api-router.js';
 import { authenticate } from '../../middleware/auth.js';
 import { createAuthRateLimit } from '../../middleware/rate-limit.js';
 import { validate } from '../../middleware/validate.js';
@@ -10,7 +10,7 @@ import type { AuthService } from './auth.service.js';
 const { REGISTER, LOGIN, REFRESH, LOGOUT, ME } = API_ROUTES.AUTH;
 
 export const createAuthRouter = (authService: AuthService) => {
-  const router = Router();
+  const router = createApiRouter();
   const controller = createAuthController(authService);
   const authRateLimit = createAuthRateLimit();
 

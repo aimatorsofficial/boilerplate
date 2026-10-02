@@ -17,6 +17,7 @@ import { createAuthService } from './modules/auth/auth.service.js';
 import { createUsersRouter } from './modules/users/users.routes.js';
 import { createUsersService } from './modules/users/users.service.js';
 import { healthRouter } from './monitoring/health.js';
+import { createMetrics, createMetricsRouter, createRequestTimer } from './monitoring/metrics.js';
 import { createReadyRouter } from './monitoring/ready.js';
 
 export const createApp = ({ repositories, isReady }: Database) => {
@@ -27,9 +28,11 @@ export const createApp = ({ repositories, isReady }: Database) => {
     usersRepo: repositories.users,
     refreshTokensRepo: repositories.refreshTokens,
   });
+  const metrics = createMetrics();
 
   app.set('trust proxy', env.TRUST_PROXY);
   app.use(requestId);
+  app.use(createRequestTimer(metrics.httpDuration));
   app.use(pinoHttp({ logger, genReqId: (req) => req.id }));
   app.use(helmet());
   app.use(cors({ origin: env.CORS_ORIGINS }));
@@ -38,6 +41,7 @@ export const createApp = ({ repositories, isReady }: Database) => {
 
   app.use(healthRouter);
   app.use(createReadyRouter(isReady));
+  app.use(createMetricsRouter(metrics.registry, env.METRICS_TOKEN));
   app.use(createDocsRouter());
   app.use(API_PREFIX, createGeneralRateLimit());
   app.use(`${API_PREFIX}${API_ROUTES.AUTH.ROOT}`, createAuthRouter(authService));

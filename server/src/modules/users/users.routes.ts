@@ -1,5 +1,5 @@
-import { Router } from 'express';
 import { API_ROUTES, ROLES } from '../../constants/index.js';
+import { createApiRouter } from '../../lib/api-router.js';
 import { authenticate } from '../../middleware/auth.js';
 import { requireRole } from '../../middleware/require-role.js';
 import { validate } from '../../middleware/validate.js';
@@ -15,7 +15,7 @@ import type { UsersService } from './users.service.js';
 const { BY_ID } = API_ROUTES.USERS;
 
 export const createUsersRouter = (usersService: UsersService) => {
-  const router = Router();
+  const router = createApiRouter();
   const controller = createUsersController(usersService);
 
   router.use(authenticate, requireRole(ROLES.ADMIN));

@@ -3,6 +3,7 @@ export const API_PREFIX = '/api/v1';
 export const SYSTEM_ROUTES = {
   HEALTH: '/health',
   READY: '/ready',
+  METRICS: '/metrics',
   DOCS: '/docs',
   OPENAPI_JSON: '/docs/openapi.json',
 } as const;

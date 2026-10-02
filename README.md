@@ -3,9 +3,17 @@
 React (Vite) + Node.js (Express) + MongoDB, TypeScript everywhere.
 Read [CLAUDE.md](CLAUDE.md) for the rules and [docs/BOILERPLATE_PLAN.md](docs/BOILERPLATE_PLAN.md) for the plan.
 
-## Server
+## Setup
 
-Requires Node.js 20.19 or newer.
+Requires Node.js 20.19 or newer. Docker images and CI use Node 24 (see `.nvmrc`; run `nvm use` to match).
+
+```bash
+npm install
+```
+
+This installs the git hook: every commit runs Prettier and ESLint on the staged server files.
+
+## Server
 
 ```bash
 cd server
@@ -23,6 +31,7 @@ npm run dev
 |---|---|
 | http://localhost:4000/health | Process is alive |
 | http://localhost:4000/ready | Database is reachable (503 if not) |
+| http://localhost:4000/metrics | Prometheus metrics |
 | http://localhost:4000/docs | Swagger UI |
 | http://localhost:4000/docs/openapi.json | OpenAPI document |
 | http://localhost:4000/api/v1/auth | Register, login, refresh, logout, me |
@@ -53,11 +62,14 @@ npm run dev
 | `DB_DRIVER` | no | `memory` | `memory` or `mongo` |
 | `MONGO_URI` | when `DB_DRIVER=mongo` | | MongoDB connection string |
 | `TRUST_PROXY` | no | `0` | Number of proxies in front of the app (set to `1` behind one load balancer so rate limits see the real client IP) |
+| `METRICS_TOKEN` | no | | When set, `/metrics` needs `Authorization: Bearer <token>`. At least 24 characters |
+| `SENTRY_DSN` | no | | Send unexpected errors to Sentry. Off when empty |
 | `SEED_ADMIN_NAME` | for `seed:admin` | | Name of the first admin |
 | `SEED_ADMIN_EMAIL` | for `seed:admin` | | Email of the first admin |
 | `SEED_ADMIN_PASSWORD` | for `seed:admin` | | Password of the first admin |
 
 The server refuses to start and lists the problem if a variable is missing or invalid.
+An optional variable left blank (`NAME=`) counts as not set.
 
 ### Data storage
 
@@ -76,3 +88,50 @@ which downloads a `mongod` binary (about 100 MB) the first time `npm test` runs.
   `/auth/logout` revokes one.
 - Login, register and refresh allow 10 requests per 15 minutes per IP. Other API routes allow 300.
   The numbers live in `server/src/constants/`.
+
+## Monitoring
+
+- **Metrics:** `/metrics` serves Prometheus metrics: Node process stats and
+  `http_request_duration_seconds` labelled by method, route pattern (for example `/api/v1/users/:id`) and status.
+  Set `METRICS_TOKEN` in production so the numbers are not public.
+- **Errors:** set `SENTRY_DSN` to send unexpected (500) errors to Sentry, tagged with the request id.
+  Headers, cookies, bodies, query strings and local variables are never sent.
+- **Uptime:** create a free [UptimeRobot](https://uptimerobot.com) HTTP monitor for
+  `https://<your-domain>/health` with an alert contact. No code is needed.
+
+## Docker
+
+Install Docker Desktop, then from the repo root:
+
+```bash
+cp server/.env.example server/.env   # set JWT_ACCESS_SECRET
+docker compose up --build
+```
+
+This runs the server on http://localhost:4000 with MongoDB. Mongo data lives in the `mongo-data` volume.
+Compose sets `DB_DRIVER=mongo` and `MONGO_URI` for you.
+
+## CI/CD
+
+- `.github/workflows/ci.yml` runs on every pull request: lint, typecheck, test and build for the server,
+  and a Docker image build.
+- `.github/workflows/deploy.yml` runs on every push to `main`. It runs the same checks, pushes
+  `ghcr.io/aimatorsofficial/boilerplate-server:sha-<commit>` and `:latest`, then deploys over SSH.
+
+### One-time server setup
+
+1. On the server, install Docker and create the folder `~/boilerplate` (or set the repo variable `DEPLOY_PATH`).
+2. Put a `.env` in that folder with the server variables plus `MONGO_ROOT_USERNAME`, `MONGO_ROOT_PASSWORD`
+   and `MONGO_URI=mongodb://<user>:<password>@mongo:27017/boilerplate?authSource=admin`.
+3. Put a reverse proxy with TLS (Caddy or nginx) in front of `127.0.0.1:4000` and set `TRUST_PROXY=1`.
+4. Add these repository secrets in GitHub:
+
+| Secret | Value |
+|---|---|
+| `DEPLOY_HOST` | Server hostname or IP |
+| `DEPLOY_USER` | SSH user that can run Docker |
+| `DEPLOY_SSH_KEY` | Private key for that user |
+| `DEPLOY_KNOWN_HOSTS` | Output of `ssh-keyscan <host>`, so the server's identity is checked |
+
+Until `DEPLOY_HOST` is set, the deploy job only builds and pushes the image.
+To roll back, run `SERVER_IMAGE_TAG=sha-<older-commit> docker compose up -d` in the server folder.

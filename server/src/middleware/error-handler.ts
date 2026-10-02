@@ -2,6 +2,7 @@ import type { ErrorRequestHandler } from 'express';
 import { ERROR_CODES, type ErrorCode } from '../constants/index.js';
 import { AppError } from '../lib/app-error.js';
 import { sendError } from '../lib/response.js';
+import { reportError } from '../monitoring/sentry.js';
 
 const BODY_PARSER_ERROR_CODES: Record<string, ErrorCode> = {
   'entity.parse.failed': ERROR_CODES.INVALID_JSON,
@@ -29,5 +30,6 @@ export const errorHandler: ErrorRequestHandler = (error, req, res, _next) => {
   }
 
   req.log.error({ err: error }, 'Unhandled error');
+  reportError(error, String(req.id));
   sendError(res, new AppError(ERROR_CODES.INTERNAL_ERROR), String(req.id));
 };

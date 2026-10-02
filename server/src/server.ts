@@ -3,6 +3,9 @@ import { env } from './config/env.js';
 import { SHUTDOWN_TIMEOUT_MS } from './constants/index.js';
 import { createDatabase, type Database } from './database/index.js';
 import { logger } from './lib/logger.js';
+import { flushSentry, initSentry } from './monitoring/sentry.js';
+
+initSentry(env.SENTRY_DSN, env.NODE_ENV);
 
 const connectDatabase = async () => {
   try {
@@ -31,6 +34,7 @@ const shutdown = (signal: NodeJS.Signals) => {
   server.close(async (error) => {
     if (error) logger.error({ err: error }, 'Shutdown failed');
     await database.disconnect();
+    await flushSentry();
     process.exit(error ? 1 : 0);
   });
 

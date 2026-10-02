@@ -1,7 +1,12 @@
 import type { OpenAPIRegistry, RouteConfig } from '@asteasolutions/zod-to-openapi';
 import { z } from 'zod';
 import { HTTP_STATUS, SYSTEM_ROUTES } from '../constants/index.js';
-import { dataResponse, errorResponse } from '../docs/openapi-responses.js';
+import {
+  bearerSecurity,
+  dataResponse,
+  errorResponse,
+  signedInResponses,
+} from '../docs/openapi-responses.js';
 
 const TAGS = ['Monitoring'];
 
@@ -29,6 +34,21 @@ const ready: RouteConfig = {
   },
 };
 
+const metrics: RouteConfig = {
+  method: 'get',
+  path: SYSTEM_ROUTES.METRICS,
+  tags: TAGS,
+  security: bearerSecurity,
+  summary: 'Prometheus metrics (needs METRICS_TOKEN as a bearer token when it is set)',
+  responses: {
+    [HTTP_STATUS.OK]: {
+      description: 'Prometheus text format',
+      content: { 'text/plain': { schema: z.string() } },
+    },
+    ...signedInResponses,
+  },
+};
+
 export const registerMonitoringDocs = (registry: OpenAPIRegistry) => {
-  [health, ready].forEach((route) => registry.registerPath(route));
+  [health, ready, metrics].forEach((route) => registry.registerPath(route));
 };
