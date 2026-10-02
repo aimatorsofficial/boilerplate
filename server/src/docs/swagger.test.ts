@@ -2,7 +2,7 @@ import request from 'supertest';
 import { describe, expect, it } from 'vitest';
 import { createApp } from '../app.js';
 import { API_PREFIX, API_ROUTES, HTTP_STATUS, SYSTEM_ROUTES } from '../constants/index.js';
-import { createRepositories } from '../database/index.js';
+import { createMemoryDatabase } from '../database/memory/index.js';
 import { buildOpenApiDocument } from './swagger.js';
 
 const USERS_PATH = `${API_PREFIX}${API_ROUTES.USERS.ROOT}`;
@@ -21,7 +21,7 @@ describe('OpenAPI document', () => {
 });
 
 describe('docs routes', () => {
-  const app = createApp(createRepositories());
+  const app = createApp(createMemoryDatabase());
 
   it('serves the OpenAPI JSON', async () => {
     const response = await request(app).get(SYSTEM_ROUTES.OPENAPI_JSON);

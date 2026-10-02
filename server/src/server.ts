@@ -1,12 +1,23 @@
 import { createApp } from './app.js';
 import { env } from './config/env.js';
 import { SHUTDOWN_TIMEOUT_MS } from './constants/index.js';
-import { createRepositories } from './database/index.js';
+import { createDatabase, type Database } from './database/index.js';
 import { logger } from './lib/logger.js';
 
-const app = createApp(createRepositories());
+const connectDatabase = async () => {
+  try {
+    const database = await createDatabase(env.DB_DRIVER, env.MONGO_URI);
+    logger.info({ driver: env.DB_DRIVER }, 'Database connected');
+    return database;
+  } catch (error) {
+    logger.fatal({ err: error }, 'Database connection failed');
+    process.exit(1);
+  }
+};
 
-const server = app.listen(env.PORT, (error) => {
+const database: Database = await connectDatabase();
+
+const server = createApp(database).listen(env.PORT, (error) => {
   if (error) {
     logger.fatal({ err: error }, 'Server failed to start');
     process.exit(1);
@@ -17,8 +28,9 @@ const server = app.listen(env.PORT, (error) => {
 const shutdown = (signal: NodeJS.Signals) => {
   logger.info({ signal }, 'Shutting down');
 
-  server.close((error) => {
+  server.close(async (error) => {
     if (error) logger.error({ err: error }, 'Shutdown failed');
+    await database.disconnect();
     process.exit(error ? 1 : 0);
   });
 

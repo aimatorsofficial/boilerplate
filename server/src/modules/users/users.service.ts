@@ -1,6 +1,7 @@
 import { ERROR_CODES } from '../../constants/index.js';
 import { AppError } from '../../lib/app-error.js';
 import type { PaginationQuery } from '../../lib/pagination.js';
+import { hashPassword } from '../../lib/password.js';
 import type { UsersRepository } from './users.repository.js';
 import type { CreateUserInput, UpdateUserInput } from './users.schema.js';
 
@@ -21,9 +22,9 @@ export const createUsersService = (repo: UsersRepository) => {
 
     list: (query: PaginationQuery) => repo.list(query),
 
-    async create(input: CreateUserInput) {
-      await assertEmailIsFree(input.email);
-      return repo.create(input);
+    async create({ password, ...profile }: CreateUserInput) {
+      await assertEmailIsFree(profile.email);
+      return repo.create({ ...profile, passwordHash: await hashPassword(password) });
     },
 
     async update(id: string, input: UpdateUserInput) {

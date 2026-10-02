@@ -1,0 +1,14 @@
+{
+  "0": "constants/index.ts",
+  "1": "package.json",
+  "2": "src/app.ts",
+  "3": "users.schema.ts",
+  "4": "users.docs.ts",
+  "5": "CLAUDE.md",
+  "6": "Boilerplate Plan (Simple Version)",
+  "7": "database/index.ts",
+  "8": "server.ts",
+  "9": "compilerOptions",
+  "10": "devDependencies",
+  "11": "tsconfig.build.json"
+}

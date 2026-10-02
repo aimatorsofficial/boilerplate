@@ -1,5 +1,7 @@
 import { Router } from 'express';
-import { API_ROUTES } from '../../constants/index.js';
+import { API_ROUTES, ROLES } from '../../constants/index.js';
+import { authenticate } from '../../middleware/auth.js';
+import { requireRole } from '../../middleware/require-role.js';
 import { validate } from '../../middleware/validate.js';
 import { createUsersController } from './users.controller.js';
 import {
@@ -15,6 +17,8 @@ const { BY_ID } = API_ROUTES.USERS;
 export const createUsersRouter = (usersService: UsersService) => {
   const router = Router();
   const controller = createUsersController(usersService);
+
+  router.use(authenticate, requireRole(ROLES.ADMIN));
 
   router.get('/', validate({ query: listUsersQuerySchema }), controller.list);
   router.post('/', validate({ body: createUserBodySchema }), controller.create);

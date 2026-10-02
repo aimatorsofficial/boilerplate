@@ -8,9 +8,9 @@ import {
   HTTP_STATUS,
   SYSTEM_ROUTES,
 } from './constants/index.js';
-import { createRepositories } from './database/index.js';
+import { createMemoryDatabase } from './database/memory/index.js';
 
-const app = createApp(createRepositories());
+const app = createApp(createMemoryDatabase());
 
 describe('GET /health', () => {
   it('reports that the process is alive', async () => {

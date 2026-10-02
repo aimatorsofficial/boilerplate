@@ -10,3 +10,25 @@ export const USER_LIMITS = {
   NAME_MAX_LENGTH: 100,
   EMAIL_MAX_LENGTH: 254,
 } as const;
+
+export const PASSWORD_LIMITS = {
+  MIN_LENGTH: 8,
+  MAX_LENGTH: 128,
+} as const;
+
+export const PASSWORD_HASHING = {
+  MEMORY_COST_KIB: 19_456,
+  TIME_COST: 2,
+  PARALLELISM: 1,
+} as const;
+
+export const TOKEN_LIMITS = {
+  JWT_SECRET_MIN_LENGTH: 32,
+  REFRESH_TOKEN_BYTES: 32,
+  REFRESH_TOKEN_MAX_LENGTH: 128,
+} as const;
+
+export const RATE_LIMIT = {
+  GENERAL_MAX_REQUESTS: 300,
+  AUTH_MAX_REQUESTS: 10,
+} as const;

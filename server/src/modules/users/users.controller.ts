@@ -1,4 +1,5 @@
 import type { Request, Response } from 'express';
+import type { NoParams } from '../../lib/http-types.js';
 import { buildPageMeta } from '../../lib/pagination.js';
 import { sendCreated, sendList, sendNoContent, sendOk } from '../../lib/response.js';
 import type {
@@ -8,8 +9,6 @@ import type {
   UserIdParams,
 } from './users.schema.js';
 import type { UsersService } from './users.service.js';
-
-type NoParams = Record<string, string>;
 
 export const createUsersController = (usersService: UsersService) => ({
   async list(req: Request<NoParams, unknown, unknown, ListUsersQuery>, res: Response) {

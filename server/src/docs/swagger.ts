@@ -2,12 +2,22 @@ import { OpenAPIRegistry, OpenApiGeneratorV31 } from '@asteasolutions/zod-to-ope
 import { Router } from 'express';
 import swaggerUi from 'swagger-ui-express';
 import { APP_NAME, APP_VERSION, SYSTEM_ROUTES } from '../constants/index.js';
+import { registerAuthDocs } from '../modules/auth/auth.docs.js';
 import { registerUsersDocs } from '../modules/users/users.docs.js';
+import { registerMonitoringDocs } from '../monitoring/monitoring.docs.js';
+import { BEARER_AUTH } from './openapi-responses.js';
 
 const OPENAPI_VERSION = '3.1.0';
 
 export const buildOpenApiDocument = () => {
   const registry = new OpenAPIRegistry();
+  registry.registerComponent('securitySchemes', BEARER_AUTH, {
+    type: 'http',
+    scheme: 'bearer',
+    bearerFormat: 'JWT',
+  });
+  registerMonitoringDocs(registry);
+  registerAuthDocs(registry);
   registerUsersDocs(registry);
 
   return new OpenApiGeneratorV31(registry.definitions).generateDocument({

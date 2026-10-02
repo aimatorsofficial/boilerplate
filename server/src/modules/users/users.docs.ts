@@ -1,9 +1,12 @@
 import type { OpenAPIRegistry, RouteConfig } from '@asteasolutions/zod-to-openapi';
 import { API_PREFIX, API_ROUTES, HTTP_STATUS } from '../../constants/index.js';
 import {
+  adminOnlyResponses,
+  bearerSecurity,
   dataResponse,
   emptyResponse,
   errorResponse,
+  invalidInputResponse,
   jsonBody,
   listResponse,
   toOpenApiPath,
@@ -16,77 +19,81 @@ import {
   userResponseSchema,
 } from './users.schema.js';
 
-const TAGS = ['Users'];
 const USERS_PATH = `${API_PREFIX}${API_ROUTES.USERS.ROOT}`;
 const USER_BY_ID_PATH = toOpenApiPath(`${USERS_PATH}${API_ROUTES.USERS.BY_ID}`);
+const ADMIN_ONLY = { tags: ['Users'], security: bearerSecurity };
 
-const userComponent = userResponseSchema.meta({ id: 'User' });
+export const userComponent = userResponseSchema.meta({ id: 'User' });
 
-const invalidInput = errorResponse('Invalid input (VALIDATION_FAILED)');
 const userNotFound = errorResponse('User not found (USER_NOT_FOUND)');
 const emailTaken = errorResponse('Email already used (EMAIL_TAKEN)');
 
 const listUsers: RouteConfig = {
+  ...ADMIN_ONLY,
   method: 'get',
   path: USERS_PATH,
-  tags: TAGS,
-  summary: 'List users, newest first',
+  summary: 'List users, newest first (admin)',
   request: { query: listUsersQuerySchema },
   responses: {
     [HTTP_STATUS.OK]: listResponse('A page of users', userComponent),
-    [HTTP_STATUS.BAD_REQUEST]: invalidInput,
+    [HTTP_STATUS.BAD_REQUEST]: invalidInputResponse,
+    ...adminOnlyResponses,
   },
 };
 
 const createUser: RouteConfig = {
+  ...ADMIN_ONLY,
   method: 'post',
   path: USERS_PATH,
-  tags: TAGS,
-  summary: 'Create a user',
+  summary: 'Create a user with any role (admin)',
   request: { body: jsonBody(createUserBodySchema) },
   responses: {
     [HTTP_STATUS.CREATED]: dataResponse('The created user', userComponent),
-    [HTTP_STATUS.BAD_REQUEST]: invalidInput,
+    [HTTP_STATUS.BAD_REQUEST]: invalidInputResponse,
+    ...adminOnlyResponses,
     [HTTP_STATUS.CONFLICT]: emailTaken,
   },
 };
 
 const getUser: RouteConfig = {
+  ...ADMIN_ONLY,
   method: 'get',
   path: USER_BY_ID_PATH,
-  tags: TAGS,
-  summary: 'Get one user',
+  summary: 'Get one user (admin)',
   request: { params: userIdParamsSchema },
   responses: {
     [HTTP_STATUS.OK]: dataResponse('The user', userComponent),
-    [HTTP_STATUS.BAD_REQUEST]: invalidInput,
+    [HTTP_STATUS.BAD_REQUEST]: invalidInputResponse,
+    ...adminOnlyResponses,
     [HTTP_STATUS.NOT_FOUND]: userNotFound,
   },
 };
 
 const updateUser: RouteConfig = {
+  ...ADMIN_ONLY,
   method: 'patch',
   path: USER_BY_ID_PATH,
-  tags: TAGS,
-  summary: 'Update some fields of a user',
+  summary: 'Update some fields of a user (admin)',
   request: { params: userIdParamsSchema, body: jsonBody(updateUserBodySchema) },
   responses: {
     [HTTP_STATUS.OK]: dataResponse('The updated user', userComponent),
-    [HTTP_STATUS.BAD_REQUEST]: invalidInput,
+    [HTTP_STATUS.BAD_REQUEST]: invalidInputResponse,
+    ...adminOnlyResponses,
     [HTTP_STATUS.NOT_FOUND]: userNotFound,
     [HTTP_STATUS.CONFLICT]: emailTaken,
   },
 };
 
 const deleteUser: RouteConfig = {
+  ...ADMIN_ONLY,
   method: 'delete',
   path: USER_BY_ID_PATH,
-  tags: TAGS,
-  summary: 'Delete a user',
+  summary: 'Delete a user (admin)',
   request: { params: userIdParamsSchema },
   responses: {
     [HTTP_STATUS.NO_CONTENT]: emptyResponse('The user was deleted'),
-    [HTTP_STATUS.BAD_REQUEST]: invalidInput,
+    [HTTP_STATUS.BAD_REQUEST]: invalidInputResponse,
+    ...adminOnlyResponses,
     [HTTP_STATUS.NOT_FOUND]: userNotFound,
   },
 };

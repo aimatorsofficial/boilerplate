@@ -1,5 +1,6 @@
 import type { ResponseConfig, ZodRequestBody } from '@asteasolutions/zod-to-openapi';
 import { z, type ZodType } from 'zod';
+import { HTTP_STATUS } from '../constants/index.js';
 
 const JSON_CONTENT_TYPE = 'application/json';
 
@@ -43,3 +44,18 @@ export const errorResponse = (description: string): ResponseConfig => ({
   description,
   content: jsonContent(errorResponseSchema),
 });
+
+export const BEARER_AUTH = 'bearerAuth';
+
+export const bearerSecurity = [{ [BEARER_AUTH]: [] }];
+
+export const invalidInputResponse = errorResponse('Invalid input (VALIDATION_FAILED)');
+
+export const signedInResponses = {
+  [HTTP_STATUS.UNAUTHORIZED]: errorResponse('Missing or invalid access token (UNAUTHORIZED)'),
+};
+
+export const adminOnlyResponses = {
+  ...signedInResponses,
+  [HTTP_STATUS.FORBIDDEN]: errorResponse('Admin role required (FORBIDDEN)'),
+};
