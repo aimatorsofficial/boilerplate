@@ -1,0 +1,13 @@
+{
+  "0": "package.json",
+  "1": "src/app.ts",
+  "2": "users.schema.ts",
+  "3": "validate.ts",
+  "4": "users.service.ts",
+  "5": "users.docs.ts",
+  "6": "server.ts",
+  "7": "compilerOptions",
+  "8": "devDependencies",
+  "9": "request-id.ts",
+  "10": "tsconfig.build.json"
+}
