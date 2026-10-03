@@ -2,6 +2,10 @@
   "app": {
     "name": "Boilerplate"
   },
+  "language": {
+    "name": "English",
+    "label": "Language"
+  },
   "nav": {
     "users": "Users",
     "profile": "My profile",

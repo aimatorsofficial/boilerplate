@@ -101,7 +101,7 @@ Open http://localhost:5173. The dev server forwards `/api` to the API on http://
 (set `API_PROXY_TARGET` to change it), so start the server first.
 
 - Log in with the admin from `npm run seed:admin` to see the users list. Other users see their profile.
-- All text lives in `client/src/locales/en.json`. Components call `t('feature.screen.element')`.
+- All text lives in `client/src/locales/<language>.json`. Components call `t('feature.screen.element')`.
 - API calls live in `features/<name>/<name>.api.ts`; components use the TanStack Query hooks next to them.
 - The access token stays in memory. The refresh token is kept in `localStorage` so a reload keeps you logged in.
 
@@ -112,6 +112,22 @@ Open http://localhost:5173. The dev server forwards `/api` to the API on http://
 | `npm run lint` | ESLint |
 | `npm run typecheck` | TypeScript, no output |
 | `npm test` | Component and hook tests (API faked with MSW) |
+
+### Languages
+
+The client ships with English (`en`) and Hindi (`hi`). The switcher sits in the header and on the login page.
+The app starts in the language you picked last, then your browser's language, then English.
+Dates and numbers follow the chosen language.
+
+To add a language:
+
+1. Copy `client/src/locales/en.json` to `client/src/locales/<code>.json` and translate the values.
+   Keep `{{placeholders}}` as they are, and set `language.name` to the language's own name.
+2. Add `<code>` to `SUPPORTED_LANGUAGES` in `client/src/constants/app.ts`.
+3. Import the file in `client/src/locales/index.ts`.
+
+TypeScript fails if step 3 is missing, and `npm test` fails if any key or placeholder is missing.
+The API sends error codes, never sentences, so the server needs no change.
 
 ## Monitoring
 

@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { NavLink } from 'react-router';
 import { ROUTES } from '../constants';
 import { Button } from './Button';
+import { LanguageSwitcher } from './LanguageSwitcher';
 
 interface AppHeaderProps {
   userName: string;
@@ -30,6 +31,7 @@ export const AppHeader = ({ userName, showUsersLink, onLogout, isLoggingOut }: A
             {t('nav.profile')}
           </NavLink>
         </nav>
+        <LanguageSwitcher />
         <span className="text-sm text-slate-600">{userName}</span>
         <Button variant="secondary" onClick={onLogout} isLoading={isLoggingOut}>
           {t('nav.logout')}
