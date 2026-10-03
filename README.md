@@ -5,13 +5,13 @@ Read [CLAUDE.md](CLAUDE.md) for the rules and [docs/BOILERPLATE_PLAN.md](docs/BO
 
 ## Setup
 
-Requires Node.js 20.19 or newer. Docker images and CI use Node 24 (see `.nvmrc`; run `nvm use` to match).
+Use Node.js 24 (see `.nvmrc`; run `nvm use`). The client needs at least 22.12, the server at least 20.19.
 
 ```bash
 npm install
 ```
 
-This installs the git hook: every commit runs Prettier and ESLint on the staged server files.
+This installs the git hook: every commit runs Prettier and ESLint on the staged server and client files.
 
 ## Server
 
@@ -89,6 +89,30 @@ which downloads a `mongod` binary (about 100 MB) the first time `npm test` runs.
 - Login, register and refresh allow 10 requests per 15 minutes per IP. Other API routes allow 300.
   The numbers live in `server/src/constants/`.
 
+## Client
+
+```bash
+cd client
+npm install
+npm run dev
+```
+
+Open http://localhost:5173. The dev server forwards `/api` to the API on http://localhost:4000
+(set `API_PROXY_TARGET` to change it), so start the server first.
+
+- Log in with the admin from `npm run seed:admin` to see the users list. Other users see their profile.
+- All text lives in `client/src/locales/en.json`. Components call `t('feature.screen.element')`.
+- API calls live in `features/<name>/<name>.api.ts`; components use the TanStack Query hooks next to them.
+- The access token stays in memory. The refresh token is kept in `localStorage` so a reload keeps you logged in.
+
+| Command | What it does |
+|---|---|
+| `npm run dev` | Start Vite with hot reload |
+| `npm run build` | Build to `dist/` |
+| `npm run lint` | ESLint |
+| `npm run typecheck` | TypeScript, no output |
+| `npm test` | Component and hook tests (API faked with MSW) |
+
 ## Monitoring
 
 - **Metrics:** `/metrics` serves Prometheus metrics: Node process stats and
@@ -108,22 +132,25 @@ cp server/.env.example server/.env   # set JWT_ACCESS_SECRET
 docker compose up --build
 ```
 
-This runs the server on http://localhost:4000 with MongoDB. Mongo data lives in the `mongo-data` volume.
-Compose sets `DB_DRIVER=mongo` and `MONGO_URI` for you.
+This runs the app on http://localhost:8080 (nginx serving the client and forwarding `/api`),
+the API on http://localhost:4000 and MongoDB. Mongo data lives in the `mongo-data` volume.
+Compose sets `DB_DRIVER=mongo`, `MONGO_URI` and `TRUST_PROXY` for you.
+To create the admin: `docker compose exec server node dist/scripts/seed-admin.js` with the `SEED_ADMIN_*` values in `server/.env`.
 
 ## CI/CD
 
-- `.github/workflows/ci.yml` runs on every pull request: lint, typecheck, test and build for the server,
-  and a Docker image build.
+- `.github/workflows/ci.yml` runs on every pull request: lint, typecheck, test and build for the server
+  and the client, and a Docker image build for each.
 - `.github/workflows/deploy.yml` runs on every push to `main`. It runs the same checks, pushes
-  `ghcr.io/aimatorsofficial/boilerplate-server:sha-<commit>` and `:latest`, then deploys over SSH.
+  `ghcr.io/aimatorsofficial/boilerplate-server` and `-client` tagged `sha-<commit>` and `latest`, then deploys over SSH.
 
 ### One-time server setup
 
 1. On the server, install Docker and create the folder `~/boilerplate` (or set the repo variable `DEPLOY_PATH`).
 2. Put a `.env` in that folder with the server variables plus `MONGO_ROOT_USERNAME`, `MONGO_ROOT_PASSWORD`
    and `MONGO_URI=mongodb://<user>:<password>@mongo:27017/boilerplate?authSource=admin`.
-3. Put a reverse proxy with TLS (Caddy or nginx) in front of `127.0.0.1:4000` and set `TRUST_PROXY=1`.
+3. Put a reverse proxy with TLS (Caddy or nginx) in front of `127.0.0.1:8080`. The client container forwards
+   `/api` to the server, which is not published. The production compose file sets `TRUST_PROXY=2` for these two proxies.
 4. Add these repository secrets in GitHub:
 
 | Secret | Value |
@@ -134,4 +161,4 @@ Compose sets `DB_DRIVER=mongo` and `MONGO_URI` for you.
 | `DEPLOY_KNOWN_HOSTS` | Output of `ssh-keyscan <host>`, so the server's identity is checked |
 
 Until `DEPLOY_HOST` is set, the deploy job only builds and pushes the image.
-To roll back, run `SERVER_IMAGE_TAG=sha-<older-commit> docker compose up -d` in the server folder.
+To roll back, run `IMAGE_TAG=sha-<older-commit> docker compose up -d` in the server folder.

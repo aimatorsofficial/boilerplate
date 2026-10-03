@@ -11,22 +11,22 @@ concurrency:
 permissions:
   contents: read
 
-env:
-  SERVER_IMAGE: ghcr.io/${{ github.repository }}-server
-
 jobs:
   checks:
     uses: ./.github/workflows/ci.yml
 
   publish:
-    name: Build and push server image
+    name: Build and push ${{ matrix.app }} image
     needs: checks
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        app: [server, client]
     permissions:
       contents: read
       packages: write
-    outputs:
-      tag: ${{ steps.tag.outputs.tag }}
+    env:
+      IMAGE: ghcr.io/${{ github.repository }}-${{ matrix.app }}
     steps:
       - uses: actions/checkout@v7
 
@@ -43,13 +43,13 @@ jobs:
 
       - uses: docker/build-push-action@v7
         with:
-          context: server
+          context: ${{ matrix.app }}
           push: true
           tags: |
-            ${{ env.SERVER_IMAGE }}:${{ steps.tag.outputs.tag }}
-            ${{ env.SERVER_IMAGE }}:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+            ${{ env.IMAGE }}:${{ steps.tag.outputs.tag }}
+            ${{ env.IMAGE }}:latest
+          cache-from: type=gha,scope=${{ matrix.app }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.app }}
 
   deploy:
     name: Deploy to server
@@ -62,8 +62,10 @@ jobs:
       DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
       DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
       DEPLOY_PATH: ${{ vars.DEPLOY_PATH || 'boilerplate' }}
-      SERVER_IMAGE_TAG: ${{ needs.publish.outputs.tag }}
     steps:
+      - id: tag
+        run: echo "tag=sha-${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+
       - name: Skip when the deploy secrets are not set
         if: env.DEPLOY_HOST == ''
         run: echo "::notice::DEPLOY_HOST is not set, so the image was pushed but not deployed."
@@ -93,8 +95,9 @@ jobs:
         env:
           REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REGISTRY_USER: ${{ github.actor }}
+          IMAGE_TAG: ${{ steps.tag.outputs.tag }}
         run: |
           printf '%s' "$REGISTRY_TOKEN" | ssh -i ~/.ssh/deploy_key "$DEPLOY_USER@$DEPLOY_HOST" \
             "docker login ghcr.io -u '$REGISTRY_USER' --password-stdin"
           ssh -i ~/.ssh/deploy_key "$DEPLOY_USER@$DEPLOY_HOST" \
-            "cd '$DEPLOY_PATH' && export SERVER_IMAGE_TAG='$SERVER_IMAGE_TAG' && docker compose pull && docker compose up -d --remove-orphans"
+            "cd '$DEPLOY_PATH' && export IMAGE_TAG='$IMAGE_TAG' && docker compose pull && docker compose up -d --remove-orphans"

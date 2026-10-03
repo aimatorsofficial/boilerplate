@@ -39,9 +39,33 @@ jobs:
       - run: npm test
       - run: npm run build
 
-  server-image:
-    name: Server Docker image builds
+  client:
+    name: Client checks
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: client
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: client/package-lock.json
+
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+
+  images:
+    name: ${{ matrix.app }} Docker image builds
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        app: [server, client]
     steps:
       - uses: actions/checkout@v7
 
@@ -49,7 +73,7 @@ jobs:
 
       - uses: docker/build-push-action@v7
         with:
-          context: server
+          context: ${{ matrix.app }}
           push: false
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=${{ matrix.app }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.app }}

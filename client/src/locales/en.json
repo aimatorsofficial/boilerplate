@@ -1,0 +1,71 @@
+{
+  "app": {
+    "name": "Boilerplate"
+  },
+  "nav": {
+    "users": "Users",
+    "profile": "My profile",
+    "logout": "Log out"
+  },
+  "auth": {
+    "fields": {
+      "name": "Name",
+      "email": "Email",
+      "password": "Password",
+      "passwordHint": "At least {{count}} characters"
+    },
+    "login": {
+      "title": "Log in",
+      "submit": "Log in",
+      "noAccount": "No account yet?",
+      "registerLink": "Create one"
+    },
+    "register": {
+      "title": "Create an account",
+      "submit": "Create account",
+      "haveAccount": "Already have an account?",
+      "loginLink": "Log in"
+    }
+  },
+  "profile": {
+    "title": "My profile",
+    "role": "Role",
+    "memberSince": "Member since"
+  },
+  "users": {
+    "list": {
+      "title": "Users",
+      "emptyTitle": "No users yet",
+      "columns": {
+        "name": "Name",
+        "email": "Email",
+        "role": "Role",
+        "createdAt": "Created"
+      }
+    }
+  },
+  "roles": {
+    "user": "User",
+    "admin": "Admin"
+  },
+  "common": {
+    "loading": "Loading…",
+    "retry": "Try again",
+    "previous": "Previous",
+    "next": "Next",
+    "pageOf": "Page {{page}} of {{totalPages}}"
+  },
+  "notFound": {
+    "title": "Page not found",
+    "backHome": "Go to the home page"
+  },
+  "errors": {
+    "VALIDATION_FAILED": "Please check the highlighted fields.",
+    "EMAIL_TAKEN": "An account with this email already exists.",
+    "INVALID_CREDENTIALS": "Wrong email or password.",
+    "TOO_MANY_REQUESTS": "Too many attempts. Please wait a few minutes and try again.",
+    "FORBIDDEN": "You do not have access to this page.",
+    "NETWORK": "Cannot reach the server. Check your connection.",
+    "UNKNOWN": "Something went wrong. Please try again."
+  }
+}
